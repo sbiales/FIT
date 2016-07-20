@@ -16,9 +16,8 @@ def boundaries(lines, sline) :
     for line in range(sline,numlines) :
         current = lines[line]
         if (current.find("//") != -1) :
-            current = current[:current.find("//")]
-            print("(p)comment at line ", line+1)
-            continue #it's a comment line, ignore it
+            current = current[:current.find("//")] #ignore anything after '//'
+            continue
         #note: need to check for/skip block comments
         if (current.count("{") != 0) :
             count += current.count("{")
@@ -36,8 +35,7 @@ def perturb(lines, start, end) :
         current = lines[line]
         if (current.find("//") != -1) :
             current = current[:current.find("//")]
-            print("(p)comment at line ", line+1)
-            continue #it's a comment line, ignore it
+            continue
         #note: need to check for/skip block comments
         #also need to account for things including 'for' in the name?
         if (current.count("for") != 0) :
@@ -64,12 +62,44 @@ def output(lines) :
         for line in lines :
             out.write(line)
 
+#Add the necessary functions/code to the code from the original file
+#Expecting a very exact i.cc file
 def merge(ename, lines) :
     with open(ename, 'r') as insert :
+        stdlib = 0
         ilines = insert.readlines()
-        
-    
+        numorig = len(lines)
+        numerror = len(ilines)
+        for line in range(numorig) :
+            cur = lines[line]
 
+#Parses the error file
+#identifies functions by looking for '//function' on the preceding line
+#Returns dict{includes; declarations; functions}
+def parsefile(ename) :       
+    with open(ename, 'r') as file :
+        result = {"incl":[], "decl":[], "func":[]}
+        lines = file.readlines()
+        numlines = len(lines)
+        start = 0
+        end = 0
+        for line in range(numlines) :
+            cur = lines[line]
+            if (line < end) :
+                continue #we are inside a function
+            if (cur.find("#include") != -1) :
+                result['incl'].append(cur)
+            elif (cur.find(";") != -1) :
+                result['decl'].append(cur)
+            elif (cur.find("//function") != -1) :
+                start = line+1
+                end = boundaries(lines, start)
+                for l in lines[start:end] :
+                    result['func'].append(l)
+                #probably gonna preset start and end, check if cur<end, continue
+        return result
+
+    
 #MAIN PROGRAM
 
 filename = input("File to read: ")
@@ -97,5 +127,10 @@ with open(filename, 'r') as file :
                 print("Boundaries found. Perturbing function...\n")
                 perturb(lines, start, end)
                 output(lines)
-                
+                test = parsefile(errorname)
+                with open("test.txt", 'w') as t :
+                    for key in test.keys() :
+                        lists = test[key]
+                        for item in lists :
+                            t.write(item)
 
