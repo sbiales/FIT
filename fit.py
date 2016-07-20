@@ -15,7 +15,11 @@ def boundaries(lines, sline) :
     count = 0
     for line in range(sline,numlines) :
         current = lines[line]
-        #note: need to check for/skip comments
+        if (current.find("//") != -1) :
+            current = current[:current.find("//")]
+            print("(p)comment at line ", line+1)
+            continue #it's a comment line, ignore it
+        #note: need to check for/skip block comments
         if (current.count("{") != 0) :
             count += current.count("{")
             #print("{ at line ", line+1)
@@ -30,7 +34,11 @@ def boundaries(lines, sline) :
 def perturb(lines, start, end) :
     for line in range(start, end) :
         current = lines[line]
-        #note: need to check for/skip comments
+        if (current.find("//") != -1) :
+            current = current[:current.find("//")]
+            print("(p)comment at line ", line+1)
+            continue #it's a comment line, ignore it
+        #note: need to check for/skip block comments
         #also need to account for things including 'for' in the name?
         if (current.count("for") != 0) :
             s = line
@@ -41,27 +49,37 @@ def perturb(lines, start, end) :
                 if (cur.count("+=") != 0) :
                     loc = cur.find("+=")
                     print("found += at line ", l+1, " and loc ", loc)
-                    print("line: ", cur)
+                    #print("line: ", cur)
                     loc += 3 #move 'pointer' to account for '+= '
                     front = cur[:loc]
                     back = cur[loc:-2] #strip the ;\n
                     perturbed = front + 'inject(' + back + ');\n'
                     lines[l] = perturbed
                     print("Perturbed line ", l+1)
-                    print(lines[l])
+                    print(lines[l][:-1])
                           
 #create and write output file line by line
 def output(lines) :
-    with open("output.cc", 'w') as out :
+    with open(outname, 'w') as out :
         for line in lines :
             out.write(line)
-            
 
+def merge(ename, lines) :
+    with open(ename, 'r') as insert :
+        ilines = insert.readlines()
+        
+    
 
 #MAIN PROGRAM
 
 filename = input("File to read: ")
+#outname = input("Output file name: ")
+outname = "output.cc" #comment this out if user chooses output filename
+#errorname = input("Error code file: ")
+errorname = "i.cc" #comment this out if user specifies error file
 function = input("Function to perturb: ")
+#rate = input("Error rate: ")
+rate = 0 #comment this out if user specifies error rate
 
 with open(filename, 'r') as file :
     lines = file.readlines()
@@ -74,7 +92,9 @@ with open(filename, 'r') as file :
             if(current.find(";") == -1) :
                 print("DEFINED at line ", line+1)
                 start = line
+                print("Finding function boundaries...\n")
                 end = boundaries(lines, start) #finds end of function (given start)
+                print("Boundaries found. Perturbing function...\n")
                 perturb(lines, start, end)
                 output(lines)
                 
