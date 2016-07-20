@@ -94,7 +94,7 @@ def parsefile(ename) :
             elif (cur.find("//function") != -1) :
                 start = line+1
                 end = boundaries(lines, start)
-                for l in lines[start:end] :
+                for l in lines[start:end+1] :
                     result['func'].append(l)
                 #probably gonna preset start and end, check if cur<end, continue
         return result
