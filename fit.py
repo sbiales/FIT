@@ -63,15 +63,35 @@ def output(lines) :
             out.write(line)
 
 #Add the necessary functions/code to the code from the original file
-#Expecting a very exact i.cc file
-def merge(ename, lines) :
-    with open(ename, 'r') as insert :
-        stdlib = 0
-        ilines = insert.readlines()
-        numorig = len(lines)
-        numerror = len(ilines)
-        for line in range(numorig) :
-            cur = lines[line]
+#Takes in parsed error code file and readlines from original file
+def merge(parsed, lines) :
+    stdlib = 0
+    floatlib = 0
+    newlines = []
+    incl = parsed['incl']
+    decl = parsed['decl']
+    func = parsed['func']
+    last = []
+    #first the includes. avoid duplicates
+    for item in incl :
+        if (lines.count(item) != 0) :
+            incl.remove(item)
+    for num, line in enumerate(lines) :
+        #if we see an include statement, note the line number
+        if (line.find("#include") != -1) :
+            last.append(num)
+        newlines.append(line)
+    #insert declarations after the last '#include' statement
+    for d in range(len(decl)) :
+        final = max(last) #should be the last '#include' statement
+        newlines.insert(final+1+d, decl[d])
+    #insert includes at the top
+    for i in range(len(incl)) :
+        newlines.insert(i, incl[i])
+    #insert functions at the bottom
+    for f in func :
+        newlines.append(f)
+    return newlines    
 
 #Parses the error file
 #identifies functions by looking for '//function' on the preceding line
@@ -81,7 +101,6 @@ def parsefile(ename) :
         result = {"incl":[], "decl":[], "func":[]}
         lines = file.readlines()
         numlines = len(lines)
-        start = 0
         end = 0
         for line in range(numlines) :
             cur = lines[line]
@@ -96,7 +115,6 @@ def parsefile(ename) :
                 end = boundaries(lines, start)
                 for l in lines[start:end+1] :
                     result['func'].append(l)
-                #probably gonna preset start and end, check if cur<end, continue
         return result
 
     
@@ -113,6 +131,8 @@ rate = 0 #comment this out if user specifies error rate
 
 with open(filename, 'r') as file :
     lines = file.readlines()
+    parsed = parsefile(errorname)
+    lines = merge(parsed, lines)
     numlines = len(lines)
 
     for line in range(numlines) :
@@ -127,10 +147,6 @@ with open(filename, 'r') as file :
                 print("Boundaries found. Perturbing function...\n")
                 perturb(lines, start, end)
                 output(lines)
-                test = parsefile(errorname)
-                with open("test.txt", 'w') as t :
-                    for key in test.keys() :
-                        lists = test[key]
-                        for item in lists :
-                            t.write(item)
+                parsed = parsefile(errorname)
+
 
