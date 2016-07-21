@@ -10,7 +10,7 @@ double inject(double i)
 	if(rand()%error_range == 1){
       return fRand(DBL_MIN, DBL_MAX);
 	  }
-    else{
+  else{
       return i;
       }
 }

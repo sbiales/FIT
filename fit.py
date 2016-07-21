@@ -1,19 +1,19 @@
 #Fault Injection Tool
 #Writes to output file 'output.cc'
-#Consider: X~want to create new output file, not edit original
-#           ~want to inject the inject() function into the output file
-#           ~want to have choice to perturb more than 1 function
+#Consider: ~want to insert user specified error rate
+#          ~need to deal with block comments
 #Assumed: ~function to perturb provided
-#         ~perturb a single += computation in a for loop
-#         ~inject() func is already in the c program
+#         ~perturb all += computations in a for loop
+#         ~inject() func exists (and works)
 #         ~type of z is double (for min/max in inject func)
+#         ~error rate is stored in error_rate function
 
 #takes the result of readlines() and first line of a function
 #returns last line of the function
 def boundaries(lines, sline) :
     numlines = len(lines)
     count = 0
-    for line in range(sline,numlines) :
+    for line in range(sline, numlines) :
         current = lines[line]
         if (current.find("//") != -1) :
             current = current[:current.find("//")] #ignore anything after '//'
@@ -35,7 +35,6 @@ def perturb(lines, start, end) :
         current = lines[line]
         if (current.find("//") != -1) :
             current = current[:current.find("//")]
-            continue
         #note: need to check for/skip block comments
         #also need to account for things including 'for' in the name?
         if (current.count("for") != 0) :
@@ -89,6 +88,7 @@ def merge(parsed, lines) :
     for i in range(len(incl)) :
         newlines.insert(i, incl[i])
     #insert functions at the bottom
+    newlines.append('\n')
     for f in func :
         newlines.append(f)
     return newlines    
@@ -100,10 +100,8 @@ def parsefile(ename) :
     with open(ename, 'r') as file :
         result = {"incl":[], "decl":[], "func":[]}
         lines = file.readlines()
-        numlines = len(lines)
         end = 0
-        for line in range(numlines) :
-            cur = lines[line]
+        for line, cur in enumerate(lines) :
             if (line < end) :
                 continue #we are inside a function
             if (cur.find("#include") != -1) :
@@ -125,28 +123,38 @@ filename = input("File to read: ")
 outname = "output.cc" #comment this out if user chooses output filename
 #errorname = input("Error code file: ")
 errorname = "i.cc" #comment this out if user specifies error file
-function = input("Function to perturb: ")
-#rate = input("Error rate: ")
-rate = 0 #comment this out if user specifies error rate
+functions = input("Functions to perturb (separate w/ spaces): ")
+rate = input("Error rate: ")
+
 
 with open(filename, 'r') as file :
     lines = file.readlines()
     parsed = parsefile(errorname)
+    for num, d in enumerate(parsed['decl']) : #account for user specified rate
+        if (d.find("error_rate") != -1) :
+            loc = d.find("error_rate")
+            loc += 10 #move 'pointer' past the word
+            d = d[:loc] #truncate the line
+            d = d + " = " + str(rate) + ";\n"
+            parsed['decl'][num] = d            
     lines = merge(parsed, lines)
-    numlines = len(lines)
+    functions = functions.split()
 
-    for line in range(numlines) :
-        current = lines[line]
-        if(current.count(function) != 0) :
-            print("Found instance at line ", line+1)
-            if(current.find(";") == -1) :
-                print("DEFINED at line ", line+1)
-                start = line
-                print("Finding function boundaries...\n")
-                end = boundaries(lines, start) #finds end of function (given start)
-                print("Boundaries found. Perturbing function...\n")
-                perturb(lines, start, end)
-                output(lines)
-                parsed = parsefile(errorname)
+    for function in functions :
+        for line, current in enumerate(lines) :
+            if (current.find("//") != -1) :
+                current = current[:current.find("//")] #ignore anything after '//'
+                #continue
+            if(current.count(function) != 0) :
+                print("Found ", function, " at line ", line+1)
+                if(current.find(";") == -1) :
+                    print("DEFINED at line ", line+1)
+                    start = line
+                    print("\nFinding function boundaries...")
+                    end = boundaries(lines, start) #finds end of function (given start)
+                    print("Boundaries are lines ", start+1, end+1)
+                    print("Boundaries found. Perturbing function...\n")
+                    perturb(lines, start, end)
+    output(lines)
 
 

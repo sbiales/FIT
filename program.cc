@@ -16,3 +16,10 @@ int main(int argc, char *argv[])
 	printf("z is: %lf\n", z);
 }
 }
+
+void test() {
+  double x = 12;
+  for(int i = 0; i < 10 ; i++)
+  {
+    x += i;
+}}
