@@ -8,8 +8,8 @@ int main(int argc, char *argv[])
   double y = 0;
 	for(int i = 0; i < 10 ; i++){
       //also for test purposes
-      z += (i*error_rate/rand() + 55) ;
-      z += (i*35) + 7;
+      z += i;
+      printf("%lf", DBL_MAX);
 	}
       y += 872; //for test purposes
 	printf("z should be 45\n");
@@ -19,6 +19,13 @@ int main(int argc, char *argv[])
 
 void test() {
   double x = 12;
+
+  /*
+  for(int i = 0; i < 10 ; i++)
+  {
+    q += WRONG;
+  }
+  */
   for(int i = 0; i < 10 ; i++)
   {
     x += i;

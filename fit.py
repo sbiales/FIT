@@ -1,7 +1,7 @@
 #Fault Injection Tool
-#Writes to output file 'output.cc'
-#Consider: ~want to insert user specified error rate
-#          ~need to deal with block comments
+#Writes to output file 'output.cc' by default
+#Consider: ~need to deal with block comments
+#          ~make sure file doesnt contain functions by the names of those inserted
 #Assumed: ~function to perturb provided
 #         ~perturb all += computations in a for loop
 #         ~inject() func exists (and works)
@@ -12,30 +12,48 @@
 #returns last line of the function
 def boundaries(lines, sline) :
     numlines = len(lines)
+    seen = 0
     count = 0
+    cend = 0
     for line in range(sline, numlines) :
         current = lines[line]
+        if (line <= cend) :
+            continue #we are inside a block comment
+        if (current.find("/*") != -1) :
+            cend = block(lines, line)
+            current = current[:current.find("/*")]
         if (current.find("//") != -1) :
             current = current[:current.find("//")] #ignore anything after '//'
-            continue
-        #note: need to check for/skip block comments
         if (current.count("{") != 0) :
             count += current.count("{")
-            #print("{ at line ", line+1)
+            seen = 1 #want to make sure we have seen a { before giving up
         if (current.count("}") != 0) :
             count -= current.count("}")
-            #print("} at line ", line+1)
-        if ((count == 0) & (line != sline)) :
+        if ((count == 0) & (seen != 0)) :
             return line
+
+#returns last line of a block comment (c code, so */)
+def block(lines, sline) :
+    numlines = len(lines)
+    for line in range(sline, numlines) :
+        current = lines[line]
+        if (current.find("*/") != -1) :
+            return line
+    
         
 #takes lines and boundaries of function, finds a += computation in a
 #for loop and injects error into it by calling inject() function
 def perturb(lines, start, end) :
+    cend = 0
     for line in range(start, end) :
         current = lines[line]
+        if (line <= cend) :
+            continue #we are inside a block comment
+        if (current.find("/*") != -1) :
+            cend = block(lines, line)
+            current = current[:current.find("/*")]
         if (current.find("//") != -1) :
             current = current[:current.find("//")]
-        #note: need to check for/skip block comments
         #also need to account for things including 'for' in the name?
         if (current.count("for") != 0) :
             s = line
@@ -46,11 +64,11 @@ def perturb(lines, start, end) :
                 if (cur.count("+=") != 0) :
                     loc = cur.find("+=")
                     print("found += at line ", l+1, " and loc ", loc)
-                    #print("line: ", cur)
-                    loc += 3 #move 'pointer' to account for '+= '
+                    loc += 2 #move 'pointer' to account for '+='
                     front = cur[:loc]
-                    back = cur[loc:-2] #strip the ;\n
-                    perturbed = front + 'inject(' + back + ');\n'
+                    scol = cur.find(";")
+                    back = cur[loc:scol] #strip the ;\n
+                    perturbed = front + ' inject(' + back + ');\n'
                     lines[l] = perturbed
                     print("Perturbed line ", l+1)
                     print(lines[l][:-1])
@@ -115,6 +133,13 @@ def parsefile(ename) :
                     result['func'].append(l)
         return result
 
+#checks if instance of function is a definition or prototype
+def checkdef(lines, sline) :
+    current = lines[sline]
+    while(current.find(")") ==-1) : #we are dealing with multiline
+        current 
+        if(current.find(";") == -1) :
+           print("DEFINED at line ", line+1)
     
 #MAIN PROGRAM
 
@@ -125,7 +150,6 @@ outname = "output.cc" #comment this out if user chooses output filename
 errorname = "i.cc" #comment this out if user specifies error file
 functions = input("Functions to perturb (separate w/ spaces): ")
 rate = input("Error rate: ")
-
 
 with open(filename, 'r') as file :
     lines = file.readlines()
@@ -140,21 +164,23 @@ with open(filename, 'r') as file :
     lines = merge(parsed, lines)
     functions = functions.split()
 
+    cend = 0
     for function in functions :
         for line, current in enumerate(lines) :
+            if (line <= cend) :
+                continue #we are inside a block comment
+            if (current.find("/*") != -1) :
+                cend = block(lines, line)
+                current = current[:current.find("/*")]
             if (current.find("//") != -1) :
                 current = current[:current.find("//")] #ignore anything after '//'
-                #continue
             if(current.count(function) != 0) :
-                print("Found ", function, " at line ", line+1)
+                print("Found ", function, " at line ", line+1)                    
                 if(current.find(";") == -1) :
                     print("DEFINED at line ", line+1)
                     start = line
                     print("\nFinding function boundaries...")
                     end = boundaries(lines, start) #finds end of function (given start)
-                    print("Boundaries are lines ", start+1, end+1)
                     print("Boundaries found. Perturbing function...\n")
                     perturb(lines, start, end)
     output(lines)
-
-

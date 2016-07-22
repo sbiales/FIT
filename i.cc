@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <float.h>
+#include <time.h>
 double fRand(double fMin, double fMax);
 double inject(double i);
-double error_rate = 100;
+double error_rate = 50;
+srand(time(NULL));
 //function
 double inject(double i)
 {
