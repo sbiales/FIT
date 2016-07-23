@@ -39,13 +39,14 @@ def block(lines, sline) :
         current = lines[line]
         if (current.find("*/") != -1) :
             return line
-    
-        
-#takes lines and boundaries of function, finds a += computation in a
-#for loop and injects error into it by calling inject() function
-def perturb(lines, start, end) :
+
+#determine first line of innermost for loop
+def innermost(lines, sline, eline) :
+    #if we know there's def no more loops, don't waste time looking
+    if (' '.join(lines[sline+1:eline]).split().count('for') == 0) :
+        return sline
     cend = 0
-    for line in range(start, end) :
+    for line in range(sline+1, eline) :
         current = lines[line]
         if (line <= cend) :
             continue #we are inside a block comment
@@ -54,9 +55,15 @@ def perturb(lines, start, end) :
             current = current[:current.find("/*")]
         if (current.find("//") != -1) :
             current = current[:current.find("//")]
-        #also need to account for things including 'for' in the name?
-        if (current.count("for") != 0) :
-            s = line
+        if (current.split().count("for") != 0) :
+            e = boundaries(lines, line)
+            return innermost(lines, line, e)
+    return sline
+        
+#takes lines and boundaries of function, finds a += computation in a
+#for loop and injects error into it by calling inject() function
+def perturb(lines, start, end) :
+            s = innermost(lines, start, end)
             e = boundaries(lines, s)
             for l in range(s, e) :
                 cur = lines[l]
@@ -72,7 +79,7 @@ def perturb(lines, start, end) :
                     lines[l] = perturbed
                     print("Perturbed line ", l+1)
                     print(lines[l][:-1])
-                          
+                    
 #create and write output file line by line
 def output(lines) :
     with open(outname, 'w') as out :
