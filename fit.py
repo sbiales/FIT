@@ -8,6 +8,8 @@
 #         ~type of z is double (for min/max in inject func)
 #         ~error rate is stored in error_rate function
 
+import re, sys
+
 #takes the result of readlines() and first line of a function
 #returns last line of the function
 def boundaries(lines, sline) :
@@ -43,8 +45,8 @@ def block(lines, sline) :
 #determine first line of innermost for loop
 def innermost(lines, sline, eline) :
     #if we know there's def no more loops, don't waste time looking
-    if (' '.join(lines[sline+1:eline]).split().count('for') == 0) :
-        return sline
+    #if (' '.join(lines[sline+1:eline]).count('for') == 0) :
+    #    return sline
     cend = 0
     for line in range(sline+1, eline) :
         current = lines[line]
@@ -55,7 +57,8 @@ def innermost(lines, sline, eline) :
             current = current[:current.find("/*")]
         if (current.find("//") != -1) :
             current = current[:current.find("//")]
-        if (current.split().count("for") != 0) :
+        #if ((current.split().count("for") != 0) :
+        if (current.find("for") != -1) :
             e = boundaries(lines, line)
             return innermost(lines, line, e)
     return sline
@@ -65,6 +68,7 @@ def innermost(lines, sline, eline) :
 def perturb(lines, start, end) :
             s = innermost(lines, start, end)
             e = boundaries(lines, s)
+            print(s, " : ", e, " Boundaries of for loop")
             for l in range(s, e) :
                 cur = lines[l]
                 #if not(cur.find("+=") == -1) :
@@ -141,12 +145,10 @@ def parsefile(ename) :
         return result
 
 #checks if instance of function is a definition or prototype
+#obviously incomplete still....
 def checkdef(lines, sline) :
     current = lines[sline]
-    while(current.find(")") ==-1) : #we are dealing with multiline
-        current 
-        if(current.find(";") == -1) :
-           print("DEFINED at line ", line+1)
+    
     
 #MAIN PROGRAM
 
