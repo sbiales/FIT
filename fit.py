@@ -4,6 +4,7 @@
 #         ~type of z is double (for min/max in inject func)
 
 import configparser as cp
+import os
 
 #takes the result of readlines() and first line of a function
 #returns last line of the function
@@ -11,7 +12,7 @@ def boundaries(lines, sline) :
     numlines = len(lines)
     seen = 0
     count = 0
-    cend = 0
+    cend = -1
     for line in range(sline, numlines) :
         current = lines[line]
         if (line <= cend) :
@@ -26,7 +27,7 @@ def boundaries(lines, sline) :
             seen = 1 #want to make sure we have seen a { before giving up
         if (current.count("}") != 0) :
             count -= current.count("}")
-        if ((count == 0) & (seen != 0)) :
+        if ((count <= 0) & (seen != 0)) :
             return line
 
 #returns last line of a block comment (c code, so */)
@@ -42,7 +43,7 @@ def innermost(lines, sline, eline) :
     #if we know there's def no more loops, don't waste time looking
     #if (' '.join(lines[sline+1:eline]).count('for') == 0) :
     #    return sline
-    cend = 0
+    cend = -1
     for line in range(sline+1, eline) :
         current = lines[line]
         if (line <= cend) :
@@ -128,7 +129,7 @@ def checkdef(lines, sline) :
 #errorfile = "inject.h" #comment this out if user specifies error file
 #functions = input("Functions to perturb (separate w/ spaces): ")
 #rate = input("Error rate: ")
-cfg = input(" Config file: ")
+cfg = input("Config file: ")
 
 #set values from config file
 config = cp.ConfigParser()
@@ -146,8 +147,8 @@ with open(filename, 'r') as file :
     lines = include(lines, errorfile)
     functions = functions.split()
 
-    cend = 0
     for function in functions :
+        cend = -1
         for line, current in enumerate(lines) :
             if (line <= cend) :
                 continue #we are inside a block comment
@@ -166,3 +167,9 @@ with open(filename, 'r') as file :
                     print("Boundaries found. Perturbing function...\n")
                     perturb(lines, start, end)
     output(lines)
+#compile and execute
+compiler = "g++ " + outname
+os.system(compiler)
+command = "./a.out"
+results = os.popen(command).readlines()
+print(results)
