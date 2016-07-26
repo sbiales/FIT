@@ -1,12 +1,9 @@
 #Fault Injection Tool
-#Writes to output file 'output.cc' by default
-#Consider: ~need to deal with block comments
-#          ~make sure file doesnt contain functions by the names of those inserted
-#Assumed: ~function to perturb provided
-#         ~perturb all += computations in a for loop
-#         ~inject() func exists (and works)
+#Writes to output file 'filename-cfgfile.cc'
+#Assumed: ~perturb all += computations in innermost for loop
 #         ~type of z is double (for min/max in inject func)
-#         ~error rate is stored in error_rate function
+
+import configparser as cp
 
 #takes the result of readlines() and first line of a function
 #returns last line of the function
@@ -107,8 +104,14 @@ def errordef(ename, rate) :
                 cur = cur + " = " + str(rate) + ";\n"
                 lines[line] = cur
     with open(ename, 'w') as file :
-        file.writelines(lines)
-                
+        file.writelines(lines)                
+
+#gets rid of file extensions
+def stripname(file) :
+    if (file.find('.') != -1) :
+        loc = file.find('.')
+        file = file[:loc]
+    return file
 
 #checks if instance of function is a definition or prototype
 #obviously incomplete still....
@@ -118,18 +121,29 @@ def checkdef(lines, sline) :
     
 #MAIN PROGRAM
 
-filename = input("File to read: ")
+#filename = input("File to read: ")
 #outname = input("Output file name: ")
-outname = "output.cc" #comment this out if user chooses output filename
-#errorname = input("Error code file: ")
-errorname = "inject.h" #comment this out if user specifies error file
-functions = input("Functions to perturb (separate w/ spaces): ")
-rate = input("Error rate: ")
+#outname = "output.cc" #comment this out if user chooses output filename
+#errorfile = input("Error code file: ")
+#errorfile = "inject.h" #comment this out if user specifies error file
+#functions = input("Functions to perturb (separate w/ spaces): ")
+#rate = input("Error rate: ")
+cfg = input(" Config file: ")
+
+#set values from config file
+config = cp.ConfigParser()
+config.read(cfg)
+filename = config.get('attributes', 'filename')
+errorfile = config.get('attributes', 'errorfile')
+functions = config.get('attributes', 'functions')
+percents = config.get('attributes', 'percents')
+rate = config.get('attributes', 'rate')
+outname = stripname(filename) + '-' + stripname(cfg) + '.cc' 
 
 with open(filename, 'r') as file :
     lines = file.readlines()
-    errordef(errorname, rate)
-    lines = include(lines, errorname)
+    errordef(errorfile, rate)
+    lines = include(lines, errorfile)
     functions = functions.split()
 
     cend = 0
