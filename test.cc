@@ -9,7 +9,6 @@ int main(int argc, char *argv[])
 	for(int i = 0; i < 10 ; i++){
       //also for test purposes
       z += i;
-      printf("%lf", DBL_MAX);
 	}
       y += 872; //for test purposes
 	printf("z should be 45\n");

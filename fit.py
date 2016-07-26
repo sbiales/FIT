@@ -122,7 +122,7 @@ filename = input("File to read: ")
 #outname = input("Output file name: ")
 outname = "output.cc" #comment this out if user chooses output filename
 #errorname = input("Error code file: ")
-errorname = "i.cc" #comment this out if user specifies error file
+errorname = "inject.h" #comment this out if user specifies error file
 functions = input("Functions to perturb (separate w/ spaces): ")
 rate = input("Error rate: ")
 

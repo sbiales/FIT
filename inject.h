@@ -4,13 +4,19 @@
 #include <stdio.h>
 double fRand(double fMin, double fMax);
 double inject(double i);
-double error_rate = 90;
-srand(time(NULL));
-//function
+double error_rate = 50;
+
+class sRandInitializer {
+public: 
+  sRandInitializer() {
+    srand(time(NULL));
+  }
+};
+
+static sRandInitializer *aVar = new sRandInitializer();
+
 double inject(double i)
 {
-  int error_range = 100/error_rate;
-  //if(rand()%error_range == 1){
   if((double)rand() / RAND_MAX * 100 <error_rate){
       printf("Perturbed\n");
       return fRand(DBL_MIN, DBL_MAX);
@@ -20,7 +26,7 @@ double inject(double i)
       return i;
       }
 }
-//function
+
 double fRand(double fMin, double fMax)
   {
       double f = (double)rand() / RAND_MAX;
