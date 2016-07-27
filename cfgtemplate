@@ -1,6 +1,16 @@
-cfgtemplate
-filename
-errorname
-functions
-correspondingPercents
-rate
+[attributes]
+filename : 
+errorfile : 
+functions : 
+percents : 
+rate : 
+
+#optional section if needed for program compilation/execution
+[args]
+compile : "-lm -lrt -lpthread"
+execute : "3 784 128 64 10 64"
+
+#############
+#This is the format of the configuration file
+#The output file will be named 'filename-cfgtemplate.cc'
+#comments are pound signs

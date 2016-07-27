@@ -64,10 +64,9 @@ def innermost(lines, sline, eline) :
 def perturb(lines, start, end) :
             s = innermost(lines, start, end)
             e = boundaries(lines, s)
-            print(s, " : ", e, " Boundaries of for loop")
+            #print(s, " : ", e, " Boundaries of for loop")
             for l in range(s, e) :
                 cur = lines[l]
-                #if not(cur.find("+=") == -1) :
                 if (cur.count("+=") != 0) :
                     loc = cur.find("+=")
                     print("found += at line ", l+1, " and loc ", loc)
@@ -91,7 +90,26 @@ def include(lines, ename) :
     newlines = lines
     incl = '#include "' + ename + '"\n'
     newlines.insert(0, incl)
-    return newlines    
+    return newlines
+
+#comments out print statements in the file
+def psuppress(lines) :
+    cend = -1
+    for line, cur in enumerate(lines) :
+        if (line <= cend) :
+            continue #we are inside a block comment
+        if (cur.find("/*") != -1) :
+            cend = block(lines, line)
+            cur = cur[:cur.find("/*")]
+        if (cur.find("//") != -1) :
+            cur = cur[:cur.find("//")]
+        if (cur.find("print") != -1) :
+            if (cur.find("fprint") == -1) :
+                loc = cur.find("print")
+                cur = cur[:loc] +'//' + cur[loc:]
+                lines[line] = cur
+    return lines
+    
 
 #edits the error file with the user specified rate
 def errordef(ename, rate) :       
@@ -119,16 +137,9 @@ def stripname(file) :
 def checkdef(lines, sline) :
     current = lines[sline]
     
-    
+############################################################
 #MAIN PROGRAM
-
-#filename = input("File to read: ")
-#outname = input("Output file name: ")
-#outname = "output.cc" #comment this out if user chooses output filename
-#errorfile = input("Error code file: ")
-#errorfile = "inject.h" #comment this out if user specifies error file
-#functions = input("Functions to perturb (separate w/ spaces): ")
-#rate = input("Error rate: ")
+    
 cfg = input("Config file: ")
 
 #set values from config file
@@ -139,12 +150,19 @@ errorfile = config.get('attributes', 'errorfile')
 functions = config.get('attributes', 'functions')
 percents = config.get('attributes', 'percents')
 rate = config.get('attributes', 'rate')
-outname = stripname(filename) + '-' + stripname(cfg) + '.cc' 
+outname = stripname(filename) + '-' + stripname(cfg) + '.cc'
+compargs = '' #by default, no extra arguments
+cmdargs = ''
+if (config.has_option('args', 'compile')) :
+    compargs = ''.join(config.get('args', 'compile'))
+if (config.has_option('args', 'execute')) :
+    cmdargs = ''.join(config.get('args', 'execute'))
 
 with open(filename, 'r') as file :
     lines = file.readlines()
     errordef(errorfile, rate)
     lines = include(lines, errorfile)
+    lines = psuppress(lines)
     functions = functions.split()
 
     for function in functions :
@@ -168,8 +186,8 @@ with open(filename, 'r') as file :
                     perturb(lines, start, end)
     output(lines)
 #compile and execute
-compiler = "g++ " + outname
+compiler = "g++ " + outname + " " + compargs
 os.system(compiler)
-command = "./a.out"
+command = "./a.out " + cmdargs
 results = os.popen(command).readlines()
 print(results)
