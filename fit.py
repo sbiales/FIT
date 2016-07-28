@@ -62,7 +62,7 @@ def innermost(lines, sline, eline) :
         
 #takes lines and boundaries of function, finds a += computation in a
 #for loop and injects error into it by calling inject() function
-def perturb(lines, start, end) :
+def perturb(lines, erate, start, end) :
             s = innermost(lines, start, end)
             e = boundaries(lines, s)
             #print(s, " : ", e, " Boundaries of for loop")
@@ -75,7 +75,7 @@ def perturb(lines, start, end) :
                     front = cur[:loc]
                     scol = cur.find(";")
                     back = cur[loc:scol] #strip the ;\n
-                    perturbed = front + ' inject(' + back + ');\n'
+                    perturbed = front + ' inject(' + erate + "," + back + ');\n'
                     lines[l] = perturbed
                     print("Perturbed line ", l+1)
                     print(lines[l][:-1])
@@ -179,8 +179,9 @@ with open(filename, 'r') as file :
     lines = include(lines, errorfile)
     #lines = psuppress(lines)
     functions = functions.split()
+    percents = percents.split()
 
-    for function in functions :
+    for index, function in enumerate(functions) :
         cend = -1
         for line, current in enumerate(lines) :
             if (line <= cend) :
@@ -195,10 +196,12 @@ with open(filename, 'r') as file :
                 if(current.find(";") == -1) :
                     print("DEFINED at line ", line+1)
                     start = line
-                    print("\nFinding function boundaries...")
+                    print("\nFinding ",function," boundaries...")
                     end = boundaries(lines, start) #finds end of function (given start)
-                    print("Boundaries found. Perturbing function...\n")
-                    perturb(lines, start, end)
+                    print("Boundaries found. Perturbing ",function,"...\n")
+                    erate = percents[index]
+                    print(function, " : ", erate, "%")
+                    perturb(lines, erate, start, end)
     output(lines)
 #compile and execute baseline
 compiler = "g++ " + filename + " " + compargs

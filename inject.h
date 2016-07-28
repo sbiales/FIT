@@ -14,9 +14,10 @@ public:
 
 static sRandInitializer *aVar = new sRandInitializer();
 
-double inject(double i)
+double inject(int r, double i)
 {
-  if((double)rand() / RAND_MAX * 100 <error_rate){
+  double rate = error_rate*r/100;
+  if((double)rand() / RAND_MAX * 100 <rate){
       return fRand(DBL_MIN, DBL_MAX);
     }
   else{
