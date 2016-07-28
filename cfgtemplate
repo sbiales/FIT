@@ -4,6 +4,7 @@ errorfile :
 functions : 
 percents : 
 rate : 
+runs : 
 
 #optional section if needed for program compilation/execution
 [args]

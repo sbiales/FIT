@@ -2,9 +2,10 @@
 #Writes to output file 'filename-cfgfile.cc'
 #Assumed: ~perturb all += computations in innermost for loop
 #         ~type of z is double (for min/max in inject func)
+#         ~File outputs results in format 
 
 import configparser as cp
-import os
+import os, re
 
 #takes the result of readlines() and first line of a function
 #returns last line of the function
@@ -92,7 +93,7 @@ def include(lines, ename) :
     newlines.insert(0, incl)
     return newlines
 
-#comments out print statements in the file
+#comments out all printf statements in the file
 def psuppress(lines) :
     cend = -1
     for line, cur in enumerate(lines) :
@@ -132,6 +133,19 @@ def stripname(file) :
         file = file[:loc]
     return file
 
+#assumes code is compiled; executes code and retrieves results
+#returns percent correct
+def getresults(ex) :
+    results = os.popen(ex).readlines()
+    regex = re.compile("(\d+)( : )(\d+)")
+    results = [m.group(0) for l in results for m in [regex.search(l) ] if m]
+    result = results[0]
+    m = regex.search(result)
+    num = int(m.group(1))
+    den = int(m.group(3))
+    return num/den*100
+    
+
 #checks if instance of function is a definition or prototype
 #obviously incomplete still....
 def checkdef(lines, sline) :
@@ -150,6 +164,7 @@ errorfile = config.get('attributes', 'errorfile')
 functions = config.get('attributes', 'functions')
 percents = config.get('attributes', 'percents')
 rate = config.get('attributes', 'rate')
+runs = int(config.get('attributes', 'runs'))
 outname = stripname(filename) + '-' + stripname(cfg) + '.cc'
 compargs = '' #by default, no extra arguments
 cmdargs = ''
@@ -162,7 +177,7 @@ with open(filename, 'r') as file :
     lines = file.readlines()
     errordef(errorfile, rate)
     lines = include(lines, errorfile)
-    lines = psuppress(lines)
+    #lines = psuppress(lines)
     functions = functions.split()
 
     for function in functions :
@@ -185,9 +200,17 @@ with open(filename, 'r') as file :
                     print("Boundaries found. Perturbing function...\n")
                     perturb(lines, start, end)
     output(lines)
-#compile and execute
-compiler = "g++ " + outname + " " + compargs
-os.system(compiler)
+#compile and execute baseline
+compiler = "g++ " + filename + " " + compargs
 command = "./a.out " + cmdargs
-results = os.popen(command).readlines()
+os.system(compiler)
+baseline = getresults(command)
+
+#run analysis
+compiler = "g++ " + outname + " " + compargs
+command = "./a.out " + cmdargs
+os.system(compiler)
+results = []
+for i in range(runs) :
+    results.append(getresults(command))
 print(results)
