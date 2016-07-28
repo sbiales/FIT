@@ -1,11 +1,12 @@
 #Fault Injection Tool
-#Writes to output file 'filename-cfgfile.cc'
+#Writes to output file 'filename-cfg.cc'
 #Assumed: ~perturb all += computations in innermost for loop
 #         ~type of z is double (for min/max in inject func)
-#         ~File outputs results in format 
+#         ~File outputs results in format [\d : \d]
 
 import configparser as cp
-import os, re
+import statistics as stats
+import os, re, time, sys
 
 #takes the result of readlines() and first line of a function
 #returns last line of the function
@@ -80,37 +81,16 @@ def perturb(lines, erate, start, end) :
                     print("Perturbed line ", l+1)
                     print(lines[l][:-1])
                     
-#create and write output file line by line
+#create and write output file
 def output(lines) :
     with open(outname, 'w') as out :
-        for line in lines :
-            out.write(line)
+        out.writelines(lines)
 
 #Includes the error file
 def include(lines, ename) :
-    newlines = lines
     incl = '#include "' + ename + '"\n'
-    newlines.insert(0, incl)
-    return newlines
-
-#comments out all printf statements in the file
-def psuppress(lines) :
-    cend = -1
-    for line, cur in enumerate(lines) :
-        if (line <= cend) :
-            continue #we are inside a block comment
-        if (cur.find("/*") != -1) :
-            cend = block(lines, line)
-            cur = cur[:cur.find("/*")]
-        if (cur.find("//") != -1) :
-            cur = cur[:cur.find("//")]
-        if (cur.find("print") != -1) :
-            if (cur.find("fprint") == -1) :
-                loc = cur.find("print")
-                cur = cur[:loc] +'//' + cur[loc:]
-                lines[line] = cur
+    lines.insert(0, incl)
     return lines
-    
 
 #edits the error file with the user specified rate
 def errordef(ename, rate) :       
@@ -143,8 +123,7 @@ def getresults(ex) :
     m = regex.search(result)
     num = int(m.group(1))
     den = int(m.group(3))
-    return num/den*100
-    
+    return num/den*100  
 
 #checks if instance of function is a definition or prototype
 #obviously incomplete still....
@@ -153,9 +132,9 @@ def checkdef(lines, sline) :
     
 ############################################################
 #MAIN PROGRAM
-    
-cfg = input("Config file: ")
 
+cfg = sys.argv[1]
+t0 = time.time()
 #set values from config file
 config = cp.ConfigParser()
 config.read(cfg)
@@ -177,7 +156,6 @@ with open(filename, 'r') as file :
     lines = file.readlines()
     errordef(errorfile, rate)
     lines = include(lines, errorfile)
-    #lines = psuppress(lines)
     functions = functions.split()
     percents = percents.split()
 
@@ -216,4 +194,12 @@ os.system(compiler)
 results = []
 for i in range(runs) :
     results.append(getresults(command))
-print(results)
+mean = stats.mean(results)
+normalized = mean/baseline*100
+with open("results", "w") as datafile :
+    for i in results :
+        datafile.write(str(i)+'\n')
+print("Runs: ", runs)
+print("Normalized mean: ", normalized)
+t1 = time.time()
+print("Time elapsed: ", t1-t0)
