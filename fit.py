@@ -200,6 +200,7 @@ with open("results", "w") as datafile :
     for i in results :
         datafile.write(str(i)+'\n')
 print("Runs: ", runs)
+print("Rate: ", rate, "%")
 print("Normalized mean: ", normalized)
 t1 = time.time()
-print("Time elapsed: ", t1-t0)
+print("Time elapsed: ", t1-t0, " seconds")
