@@ -2,8 +2,8 @@
 #include <float.h>
 #include <time.h>
 double fRand(double fMin, double fMax);
-double inject(double i);
-double error_rate = 50;
+double inject(int r, double i);
+double error_rate = .1;
 
 class sRandInitializer {
 public: 

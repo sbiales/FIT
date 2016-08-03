@@ -181,6 +181,8 @@ with open(filename, 'r') as file :
                     print(function, " : ", erate, "%")
                     perturb(lines, erate, start, end)
     output(lines)
+print("Runs: ", runs)
+print("Rate: ", rate, "%")
 #compile and execute baseline
 compiler = "g++ " + filename + " " + compargs
 command = "./a.out " + cmdargs
@@ -199,8 +201,6 @@ normalized = mean/baseline*100
 with open("results", "w") as datafile :
     for i in results :
         datafile.write(str(i)+'\n')
-print("Runs: ", runs)
-print("Rate: ", rate, "%")
 print("Normalized mean: ", normalized)
 t1 = time.time()
 print("Time elapsed: ", t1-t0, " seconds")
